@@ -111,6 +111,16 @@ namespace DSVideoInputView
             {
                 ApplySettings(captureView.SourceSettings, audioSettings);
             }
+
+            if (activeSource != null)
+            {
+                Program.State.SetSourceDevice(activeSource.Name);
+            }
+            if(activeAudio != null)
+            {
+                Program.State.SetAudioDevice(activeAudio.Name);
+            }
+            Program.State.SaveSettings();
         }
 
         private void SourceMenuOpening(object sender, EventArgs e)
@@ -271,7 +281,16 @@ namespace DSVideoInputView
 
             if(store)
             {
-                // TODO : Store Setting, need to know the name of the device
+                if(activeSource != null)
+                {
+                    Program.State.SetSettings(activeSource.Name, settings);
+                }
+                if(activeAudio != null)
+                {
+                    Program.State.SetSettings(activeAudio.Name, audioSettings);
+                }                    
+
+                Program.State.SaveSettings();
             }
         }
 

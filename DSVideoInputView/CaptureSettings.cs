@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace DSVideoInputView
 {
+    [Serializable]
     public struct CaptureSettings
     {
         public string SourceName;
@@ -20,6 +21,7 @@ namespace DSVideoInputView
 
     }
 
+    [Serializable]
     public struct SourceSettings : IDeviceSettings
     {
         public SourceAspectFit SourceAspectFit;
@@ -32,6 +34,7 @@ namespace DSVideoInputView
         public int MultiplyerHeight;
     }
 
+    [Serializable]
     public struct AudioSettings : IDeviceSettings
     {
         public bool Mute;

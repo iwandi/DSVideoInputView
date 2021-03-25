@@ -17,6 +17,7 @@ namespace DSVideoInputView
         static void Main()
         {
             State = new GlobalState();
+            State.LoadSettings();
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

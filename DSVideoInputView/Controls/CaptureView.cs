@@ -211,20 +211,19 @@ namespace DSVideoInputView
                 {
                     hr = graphBuilder.AddFilter(source, "Video Capture");
                     DsError.ThrowExceptionForHR(hr);
+
+                    hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, source, null, outputRenderer);
+                    DsError.ThrowExceptionForHR(hr);
                 }
 
                 if (audioSource != null)
                 {
                     hr = graphBuilder.AddFilter(audioSource, "Audio Capture");
                     DsError.ThrowExceptionForHR(hr);
+
+                    hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Audio, audioSource, null, null);
+                    DsError.ThrowExceptionForHR(hr);
                 }
-
-
-                hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, source, null, outputRenderer);
-                DsError.ThrowExceptionForHR(hr);
-
-                hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Audio, audioSource, null, null);
-                DsError.ThrowExceptionForHR(hr);
 
                 InitVideoWidnow(Handle);
 
