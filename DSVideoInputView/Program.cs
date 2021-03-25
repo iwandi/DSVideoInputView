@@ -6,17 +6,23 @@ using System.Windows.Forms;
 
 namespace DSVideoInputView
 {
-    static class Program
+    internal static class Program
     {
+        public static GlobalState State;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
+            State = new GlobalState();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainWindow());
+
+            State.Dispose();
         }
     }
 }

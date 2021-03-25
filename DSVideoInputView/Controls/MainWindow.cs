@@ -11,6 +11,9 @@ namespace DSVideoInputView
     {
         SourceSettingsWindow sourceSettingsWindow;
 
+        DeviceEntry activeSource;
+        DeviceEntry activeAudio;
+
         Timer hideTimer = new Timer();
 
         bool mouseDrag;
@@ -45,32 +48,9 @@ namespace DSVideoInputView
             InitSourceSettingsWindow();
             InitializeComponent();
             
-            captureView.Init(false);            
+            captureView.Init();
 
-            InitSourceSettingsWindow();
-
-            LoadSettings(new CaptureSettings
-            {
-                //SourceName = "3",
-                SourceName = "CY",
-                //SourceName = "Unknown (3)",
-
-                SourceSettings = new Dictionary<string, SourceSettings>
-                {
-                    {  "CY3014 USB, Analog 01 Capture", new SourceSettings
-                        {
-                            SourceAspectFit = SourceAspectFit.LetterBox,
-                            FixedResolution = true,
-
-                            ResolutionWidth = 1024,
-                            ResolutionHeight = 768,
-
-                            MultiplyerHeight = 1,
-                            MultiplyerWidth = 1,
-                        }
-                    },
-                },
-            });
+            LoadSettings(Program.State.Settings);
 
             InitHideMechanic();
         }
@@ -79,17 +59,18 @@ namespace DSVideoInputView
         {
             var sourceName = settings;
 
-            if(captureView.CaptureSourceList.TryGetByName(settings.SourceName, out var source))
+            if(Program.State.SourceList.TryGetByName(settings.SourceName, out var source) &&
+                Program.State.AudioList.TryGetByName(settings.AudioName, out var audioSource))
             {
-                SetSourceWithSettings(settings, source);
+                SetSourceWithSettings(settings, source, audioSource);
                 return;
             }
 
-            foreach(var entry in captureView.CaptureSourceList.List)
+            foreach(var entry in Program.State.SourceList.List)
             {
                 try
                 {
-                    SetSourceWithSettings(settings, entry);
+                    SetSourceWithSettings(settings, entry, activeAudio);
                     return;
                 }
                 catch(Exception ex)
@@ -98,18 +79,38 @@ namespace DSVideoInputView
                     System.Diagnostics.Debug.WriteLine(ex.StackTrace);
                 }
             }
+
+            foreach (var entry in Program.State.AudioList.List)
+            {
+                try
+                {
+                    SetSourceWithSettings(settings, activeSource, entry);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                    System.Diagnostics.Debug.WriteLine(ex.StackTrace);
+                }
+            }
         }
 
-        void SetSourceWithSettings(CaptureSettings settings, CaptureSourceList.Entry source)
+        void SetSourceWithSettings(CaptureSettings settings, DeviceEntry source, DeviceEntry audioSource)
         {
-            sourceSettingsWindow.SourceEntry = source;
+            activeSource = source;
+            activeAudio = audioSource;
 
+            captureView.Play(source?.Filter, audioSource?.Filter);
             if (settings.SourceSettings != null && 
-                settings.SourceSettings.TryGetValue(source.Name, out var sourceSettings))
+                settings.SourceSettings.TryGetValue(source?.Name, out var sourceSettings))
             {
-                ApplySettings(sourceSettings);
+                ApplySettings(sourceSettings, captureView.AudioSettings);
             }
-            captureView.CaptureSource = source.Filter;
+            if (settings.AudioSettings != null &&
+                settings.AudioSettings.TryGetValue(audioSource?.Name, out var audioSettings))
+            {
+                ApplySettings(captureView.SourceSettings, audioSettings);
+            }
         }
 
         private void SourceMenuOpening(object sender, EventArgs e)
@@ -121,8 +122,9 @@ namespace DSVideoInputView
         {
             sourceToolStripMenuItem.DropDownItems.Clear();
 
-            var sourceList = captureView.CaptureSourceList;
+            var sourceList = Program.State.SourceList;
             // TODO : updating this courses a issue when selection an new source in removing the old filter
+            // INFO : this my be coused by destroying the Filters while in use by the renderer
             //sourceList.UpdateList();
 
             foreach(var entry in sourceList.List)
@@ -137,12 +139,48 @@ namespace DSVideoInputView
         void SourceMenuItemClick(object sender, EventArgs e)
         {
             var menuItem = sender as ToolStripMenuItem;
-            if(menuItem != null)
+            if (menuItem != null)
             {
-                var source = menuItem.Tag as CaptureSourceList.Entry;
-                if(source != null)
+                var source = menuItem.Tag as DeviceEntry;
+                if (source != null)
                 {
-                    captureView.CaptureSource = source.Filter;
+                    SetSourceWithSettings(Program.State.Settings, source, activeAudio);
+                }
+            }
+        }
+
+        private void AudioMenuOpening(object sender, EventArgs e)
+        {
+            UpdateAudioList();
+        }
+
+        void UpdateAudioList()
+        {
+            audioToolStripMenuItem.DropDownItems.Clear();
+
+            var audioList = Program.State.AudioList;
+            // TODO : updating this courses a issue when selection an new source in removing the old filter
+            // INFO : this my be coused by destroying the Filters while in use by the renderer
+            //sourceList.UpdateList();
+
+            foreach (var entry in audioList.List)
+            {
+                var menuItem = new ToolStripMenuItem(entry.DisplayName);
+                menuItem.Tag = entry;
+                menuItem.Click += AudioMenuItemClick;
+                audioToolStripMenuItem.DropDownItems.Add(menuItem);
+            }
+        }
+
+        void AudioMenuItemClick(object sender, EventArgs e)
+        {
+            var menuItem = sender as ToolStripMenuItem;
+            if (menuItem != null)
+            {
+                var source = menuItem.Tag as DeviceEntry;
+                if (source != null)
+                {
+                    SetSourceWithSettings(Program.State.Settings, activeSource, source);
                 }
             }
         }
@@ -217,22 +255,27 @@ namespace DSVideoInputView
 
         private void SettingsToolStripMenuItemClick(object sender, EventArgs e)
         {
-            sourceSettingsWindow.SourceSettings = captureView.Settings;
-            if(!sourceSettingsWindow.Visible)
+            sourceSettingsWindow.SourceSettings = captureView.SourceSettings;
+            sourceSettingsWindow.AudioSettings = captureView.AudioSettings;
+
+            sourceSettingsWindow.SourceEntry = activeSource;
+            sourceSettingsWindow.AudioEntry = activeAudio;
+
+            if (!sourceSettingsWindow.Visible)
                 sourceSettingsWindow.ShowDialog();
         }
 
-        void SettingsApply(SourceSettings settings, bool store)
+        void SettingsApply(SourceSettings settings, AudioSettings audioSettings, bool store)
         {
-            ApplySettings(settings);
+            ApplySettings(settings, audioSettings);
 
             if(store)
             {
-                // TODO : Store Setting
+                // TODO : Store Setting, need to know the name of the device
             }
         }
 
-        void ApplySettings(SourceSettings settings)
+        void ApplySettings(SourceSettings settings, AudioSettings audioSettings)
         {
             SuspendLayout();
             var size = ClientSize;
@@ -247,13 +290,9 @@ namespace DSVideoInputView
                 size.Height = settings.MultiplyerHeight * captureView.SourceHeight;
             }
             ClientSize = size;
-            captureView.Settings = settings;
+            captureView.SourceSettings = settings;
+            captureView.AudioSettings = audioSettings;
             ResumeLayout();
-        }
-
-        private void AudioMenuOpening(object sender, EventArgs e)
-        {
-
         }
     }
 }

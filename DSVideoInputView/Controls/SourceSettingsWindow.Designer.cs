@@ -52,16 +52,23 @@ namespace DSVideoInputView
             this.labelSourceDisplayName = new System.Windows.Forms.Label();
             this.buttonConfig = new System.Windows.Forms.Button();
             this.labelSourceName = new System.Windows.Forms.Label();
+            this.labVideo = new System.Windows.Forms.Label();
+            this.labAudio = new System.Windows.Forms.Label();
+            this.groupBoxAudio = new System.Windows.Forms.GroupBox();
+            this.labelAudioDisplayName = new System.Windows.Forms.Label();
+            this.buttonAudioConfig = new System.Windows.Forms.Button();
+            this.labelAudioName = new System.Windows.Forms.Label();
             this.groupBoxFit.SuspendLayout();
             this.groupBoxResolution.SuspendLayout();
             this.groupBoxSource.SuspendLayout();
+            this.groupBoxAudio.SuspendLayout();
             this.SuspendLayout();
             // 
             // buttonCancel
             // 
             this.buttonCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.buttonCancel.Location = new System.Drawing.Point(310, 660);
+            this.buttonCancel.Location = new System.Drawing.Point(310, 580);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(75, 23);
             this.buttonCancel.TabIndex = 0;
@@ -72,7 +79,7 @@ namespace DSVideoInputView
             // buttonOk
             // 
             this.buttonOk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonOk.Location = new System.Drawing.Point(472, 660);
+            this.buttonOk.Location = new System.Drawing.Point(472, 580);
             this.buttonOk.Name = "buttonOk";
             this.buttonOk.Size = new System.Drawing.Size(75, 23);
             this.buttonOk.TabIndex = 1;
@@ -83,7 +90,7 @@ namespace DSVideoInputView
             // buttonApply
             // 
             this.buttonApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonApply.Location = new System.Drawing.Point(391, 660);
+            this.buttonApply.Location = new System.Drawing.Point(391, 580);
             this.buttonApply.Name = "buttonApply";
             this.buttonApply.Size = new System.Drawing.Size(75, 23);
             this.buttonApply.TabIndex = 2;
@@ -117,7 +124,7 @@ namespace DSVideoInputView
             // 
             this.groupBoxFit.Controls.Add(this.radioButtonStrech);
             this.groupBoxFit.Controls.Add(this.radioButtonLetterBox);
-            this.groupBoxFit.Location = new System.Drawing.Point(12, 12);
+            this.groupBoxFit.Location = new System.Drawing.Point(12, 33);
             this.groupBoxFit.Name = "groupBoxFit";
             this.groupBoxFit.Size = new System.Drawing.Size(185, 69);
             this.groupBoxFit.TabIndex = 5;
@@ -138,7 +145,7 @@ namespace DSVideoInputView
             this.groupBoxResolution.Controls.Add(this.listBoxOutput);
             this.groupBoxResolution.Controls.Add(this.radioButtonOutputBased);
             this.groupBoxResolution.Controls.Add(this.radioButtonSourceBased);
-            this.groupBoxResolution.Location = new System.Drawing.Point(12, 87);
+            this.groupBoxResolution.Location = new System.Drawing.Point(12, 108);
             this.groupBoxResolution.Name = "groupBoxResolution";
             this.groupBoxResolution.Size = new System.Drawing.Size(532, 352);
             this.groupBoxResolution.TabIndex = 6;
@@ -256,7 +263,7 @@ namespace DSVideoInputView
             this.groupBoxSource.Controls.Add(this.labelSourceDisplayName);
             this.groupBoxSource.Controls.Add(this.buttonConfig);
             this.groupBoxSource.Controls.Add(this.labelSourceName);
-            this.groupBoxSource.Location = new System.Drawing.Point(203, 12);
+            this.groupBoxSource.Location = new System.Drawing.Point(203, 33);
             this.groupBoxSource.Name = "groupBoxSource";
             this.groupBoxSource.Size = new System.Drawing.Size(341, 69);
             this.groupBoxSource.TabIndex = 7;
@@ -291,13 +298,76 @@ namespace DSVideoInputView
             this.labelSourceName.TabIndex = 0;
             this.labelSourceName.Text = "<name>";
             // 
+            // labVideo
+            // 
+            this.labVideo.AutoSize = true;
+            this.labVideo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labVideo.Location = new System.Drawing.Point(12, 9);
+            this.labVideo.Name = "labVideo";
+            this.labVideo.Size = new System.Drawing.Size(55, 20);
+            this.labVideo.TabIndex = 8;
+            this.labVideo.Text = "Video";
+            // 
+            // labAudio
+            // 
+            this.labAudio.AutoSize = true;
+            this.labAudio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labAudio.Location = new System.Drawing.Point(8, 475);
+            this.labAudio.Name = "labAudio";
+            this.labAudio.Size = new System.Drawing.Size(55, 20);
+            this.labAudio.TabIndex = 9;
+            this.labAudio.Text = "Audio";
+            // 
+            // groupBoxAudio
+            // 
+            this.groupBoxAudio.Controls.Add(this.labelAudioDisplayName);
+            this.groupBoxAudio.Controls.Add(this.buttonAudioConfig);
+            this.groupBoxAudio.Controls.Add(this.labelAudioName);
+            this.groupBoxAudio.Location = new System.Drawing.Point(12, 498);
+            this.groupBoxAudio.Name = "groupBoxAudio";
+            this.groupBoxAudio.Size = new System.Drawing.Size(532, 69);
+            this.groupBoxAudio.TabIndex = 8;
+            this.groupBoxAudio.TabStop = false;
+            this.groupBoxAudio.Text = "Source";
+            // 
+            // labelAudioDisplayName
+            // 
+            this.labelAudioDisplayName.AutoSize = true;
+            this.labelAudioDisplayName.Location = new System.Drawing.Point(6, 41);
+            this.labelAudioDisplayName.Name = "labelAudioDisplayName";
+            this.labelAudioDisplayName.Size = new System.Drawing.Size(79, 13);
+            this.labelAudioDisplayName.TabIndex = 3;
+            this.labelAudioDisplayName.Text = "<displayName>";
+            // 
+            // buttonAudioConfig
+            // 
+            this.buttonAudioConfig.Location = new System.Drawing.Point(449, 40);
+            this.buttonAudioConfig.Name = "buttonAudioConfig";
+            this.buttonAudioConfig.Size = new System.Drawing.Size(75, 23);
+            this.buttonAudioConfig.TabIndex = 2;
+            this.buttonAudioConfig.Text = "Config";
+            this.buttonAudioConfig.UseVisualStyleBackColor = true;
+            this.buttonAudioConfig.Click += new System.EventHandler(this.AudioConfigClick);
+            // 
+            // labelAudioName
+            // 
+            this.labelAudioName.AutoSize = true;
+            this.labelAudioName.Location = new System.Drawing.Point(6, 21);
+            this.labelAudioName.Name = "labelAudioName";
+            this.labelAudioName.Size = new System.Drawing.Size(45, 13);
+            this.labelAudioName.TabIndex = 0;
+            this.labelAudioName.Text = "<name>";
+            // 
             // SourceSettingsWindow
             // 
             this.AcceptButton = this.buttonOk;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonCancel;
-            this.ClientSize = new System.Drawing.Size(559, 695);
+            this.ClientSize = new System.Drawing.Size(559, 615);
+            this.Controls.Add(this.groupBoxAudio);
+            this.Controls.Add(this.labAudio);
+            this.Controls.Add(this.labVideo);
             this.Controls.Add(this.groupBoxSource);
             this.Controls.Add(this.groupBoxResolution);
             this.Controls.Add(this.groupBoxFit);
@@ -316,7 +386,10 @@ namespace DSVideoInputView
             this.groupBoxResolution.PerformLayout();
             this.groupBoxSource.ResumeLayout(false);
             this.groupBoxSource.PerformLayout();
+            this.groupBoxAudio.ResumeLayout(false);
+            this.groupBoxAudio.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -345,5 +418,11 @@ namespace DSVideoInputView
         private System.Windows.Forms.Button buttonConfig;
         private System.Windows.Forms.Label labelSourceName;
         private System.Windows.Forms.Label labelSourceDisplayName;
+        private System.Windows.Forms.Label labVideo;
+        private System.Windows.Forms.Label labAudio;
+        private System.Windows.Forms.GroupBox groupBoxAudio;
+        private System.Windows.Forms.Label labelAudioDisplayName;
+        private System.Windows.Forms.Button buttonAudioConfig;
+        private System.Windows.Forms.Label labelAudioName;
     }
 }

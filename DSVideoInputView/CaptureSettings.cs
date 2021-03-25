@@ -10,9 +10,17 @@ namespace DSVideoInputView
     {
         public string SourceName;
         public Dictionary<string,SourceSettings> SourceSettings;
+
+        public string AudioName;
+        public Dictionary<string, AudioSettings> AudioSettings;
     }
 
-    public struct SourceSettings
+    public interface IDeviceSettings
+    {
+
+    }
+
+    public struct SourceSettings : IDeviceSettings
     {
         public SourceAspectFit SourceAspectFit;
         public bool FixedResolution;
@@ -22,6 +30,11 @@ namespace DSVideoInputView
 
         public int MultiplyerWidth;
         public int MultiplyerHeight;
+    }
+
+    public struct AudioSettings : IDeviceSettings
+    {
+        public bool Mute;
     }
 
     public enum SourceAspectFit

@@ -8,22 +8,23 @@ using System.ComponentModel;
 
 namespace DSVideoInputView
 {
+    public enum PlayState
+    {
+        Stopped,
+        Paused,
+        Running,
+        Init
+    }; 
+
     public class CaptureView : Control, IDisposable
     {
-        public enum PlayState
-        {
-            Stopped,
-            Paused,
-            Running,
-            Init
-        };
-
         // Application-defined message to notify app of filtergraph events
         public const int WM_GRAPHNOTIFY = 0x8000 + 1;
 
         PlayState currentState;
 
         IGraphBuilder graphBuilder = null;
+
         IVideoWindow videoWindow = null;
         IMediaControl mediaControl = null;
         IMediaEventEx mediaEventEx = null;
@@ -35,112 +36,41 @@ namespace DSVideoInputView
         IVMRAspectRatioControl aspectRatioControl = null;
         IVMRAspectRatioControl9 aspectRatioControl9 = null;
 
-        IBaseFilter captureSource = null;
+        IBaseFilter source = null;
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IBaseFilter CaptureSource
+        public IBaseFilter Source
         {
-            get { return captureSource; }
+            get { return source; }
+        }
+
+        SourceSettings sourceSettings;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public SourceSettings SourceSettings
+        {
+            get { return sourceSettings; }
             set
             {
-                if (captureSource == value)
-                    return;
-
-                int hr = 0;
-                if(captureSource != null)
-                {
-                    if (currentState == PlayState.Running)
-                        ShowCapture = false;
-
-                    hr = graphBuilder.RemoveFilter(captureSource);
-                    DsError.ThrowExceptionForHR(hr);
-                }
-                captureSource = value;
-
-                if (captureSource == null)
-                {
-                    ShowCapture = false;
-                    SourceWidth = 0;
-                    SourceHeight = 0;
-                }
-                else
-                {
-                    // TODO : find the pin we are mapping and then query the resolution
-
-                    hr = graphBuilder.AddFilter(captureSource, "Video Capture");
-                    DsError.ThrowExceptionForHR(hr);
-
-                    hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, captureSource, null, outputRenderer);
-                    DsError.ThrowExceptionForHR(hr);
-
-                    InitVideoWidnow(Handle);
-
-                    hr = mediaControl.Run();
-                    DsError.ThrowExceptionForHR(hr);
-
-                    currentState = PlayState.Running;
-
-                    /*if(QueryResolution(captureSource, out var width, out var height))
-                    {
-                        SourceWidth = width;
-                        SourceHeight = height;
-                    }
-                    else
-                    {
-                        SourceWidth = 0;
-                        SourceHeight = 0;
-                    }*/
-                }
+                sourceSettings = value;
+                ApplySettings(value, audioSettings);
             }
         }
 
-        SourceSettings settings;
+        IBaseFilter audioSource = null;
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SourceSettings Settings
+        public IBaseFilter AudioSource
         {
-            get { return settings; }
-            set
-            {
-                settings = value;
-                ApplySettings(value);
-            }
+            get { return audioSource; }
         }
 
-        public int SourceWidth { get; protected set; }
-        public int SourceHeight { get; protected set; }
-
-        CaptureSourceList captureSourceList;
-        public CaptureSourceList CaptureSourceList
-        {
-            get { return captureSourceList; }
-        }
-
+        AudioSettings audioSettings;
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public bool ShowCapture
+        public AudioSettings AudioSettings
         {
-            get
-            {
-                return currentState == PlayState.Running;
-            }
+            get { return audioSettings; }
             set
             {
-                if (mediaControl == null)
-                    return;
-                
-                if(value)
-                {
-                    if(currentState != PlayState.Running)
-                    {
-                        var hr = mediaControl.Run();
-                        DsError.ThrowExceptionForHR(hr);
-                        currentState = PlayState.Running;
-                    }
-                }
-                else
-                {
-                    var hr = mediaControl.StopWhenReady();
-                    DsError.ThrowExceptionForHR(hr);
-                    currentState = PlayState.Stopped;
-                }
+                audioSettings = value;
+                ApplySettings(sourceSettings, value);
             }
         }
 
@@ -159,13 +89,43 @@ namespace DSVideoInputView
             }
         }
 
-        public void Init(bool autoPickSource)
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool ShowCapture
+        {
+            get
+            {
+                return currentState == PlayState.Running;
+            }
+            set
+            {
+                if (mediaControl == null)
+                    return;
+
+                if (value)
+                {
+                    if (currentState != PlayState.Running)
+                    {
+                        var hr = mediaControl.Run();
+                        DsError.ThrowExceptionForHR(hr);
+                        currentState = PlayState.Running;
+                    }
+                }
+                else
+                {
+                    var hr = mediaControl.StopWhenReady();
+                    DsError.ThrowExceptionForHR(hr);
+                    currentState = PlayState.Stopped;
+                }
+            }
+        }
+
+        public int SourceWidth { get; protected set; }
+        public int SourceHeight { get; protected set; }
+
+        public void Init()
         {
             currentState = PlayState.Init;
             InitDirectShow(Handle);
-
-            if(autoPickSource)
-                TryShowSource();
 
             Resize += ControlResize;
         }
@@ -196,9 +156,6 @@ namespace DSVideoInputView
             DsError.ThrowExceptionForHR(hr);
 
             graphBuilderRotEntry = new DsROTEntry(graphBuilder);
-
-            captureSourceList = new CaptureSourceList();
-            captureSourceList.UpdateList();
         }
 
         void InitVideoWidnow(IntPtr handle)
@@ -218,14 +175,90 @@ namespace DSVideoInputView
             DsError.ThrowExceptionForHR(hr);
         }
 
-        void TryShowSource()
+        // TODO : add audio playback
+        public void Play(IBaseFilter source, IBaseFilter audioSource)
         {
-            foreach(var entry in captureSourceList.List)
+            int hr = 0;
+
+            if (currentState == PlayState.Running)
+            {
+                ShowCapture = false;
+
+                if (this.source != null)
+                {
+                    hr = graphBuilder.RemoveFilter(this.source);
+                    DsError.ThrowExceptionForHR(hr);
+                }
+                if (this.audioSource != null)
+                {
+                    hr = graphBuilder.RemoveFilter(this.audioSource);
+                    DsError.ThrowExceptionForHR(hr);
+                }
+            }
+
+            this.source = source;
+            this.audioSource = audioSource;
+
+            if (source == null)
+            {
+                ShowCapture = false;
+                SourceWidth = 0;
+                SourceHeight = 0;
+            }
+            else
+            {
+                if (source != null)
+                {
+                    hr = graphBuilder.AddFilter(source, "Video Capture");
+                    DsError.ThrowExceptionForHR(hr);
+                }
+
+                if (audioSource != null)
+                {
+                    hr = graphBuilder.AddFilter(audioSource, "Audio Capture");
+                    DsError.ThrowExceptionForHR(hr);
+                }
+
+
+                hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, source, null, outputRenderer);
+                DsError.ThrowExceptionForHR(hr);
+
+                hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Audio, audioSource, null, null);
+                DsError.ThrowExceptionForHR(hr);
+
+                InitVideoWidnow(Handle);
+
+                hr = mediaControl.Run();
+                DsError.ThrowExceptionForHR(hr);
+
+                currentState = PlayState.Running;
+            }
+        }
+
+        public void TryShowSource(VideoInputDeviceList sourceList,
+            AudioInputDeviceList audioList)
+        {
+            foreach(var entry in sourceList.List)
             {
                 try
                 {
                     if (entry != null && entry.Filter != null)
-                        CaptureSource = entry.Filter;
+                        Play(entry.Filter, AudioSource);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                    System.Diagnostics.Debug.WriteLine(ex.StackTrace);
+                }
+            }
+
+            foreach (var entry in audioList.List)
+            {
+                try
+                {
+                    if (entry != null && entry.Filter != null)
+                        Play(Source, entry.Filter);
                     break;
                 }
                 catch (Exception ex)
@@ -305,9 +338,10 @@ namespace DSVideoInputView
         }
 
         // TODO : Implment Strech
-        void ApplySettings(SourceSettings settings)
+        // TODO : Implement Mute
+        void ApplySettings(SourceSettings sourceSettings, AudioSettings audioSettings)
         {
-            VMRAspectRatioMode aspectRatioMode = settings.SourceAspectFit == SourceAspectFit.LetterBox ? 
+            VMRAspectRatioMode aspectRatioMode = sourceSettings.SourceAspectFit == SourceAspectFit.LetterBox ? 
                 VMRAspectRatioMode.LetterBox : 
                 VMRAspectRatioMode.None;
 

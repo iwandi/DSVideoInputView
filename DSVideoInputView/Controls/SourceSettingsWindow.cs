@@ -92,8 +92,24 @@ namespace DSVideoInputView
             }
         }
 
-        CaptureSourceList.Entry entry;
-        public CaptureSourceList.Entry SourceEntry
+        AudioSettings resetAudioSettings;
+        public AudioSettings AudioSettings
+        {
+            get
+            {
+                var settings = new AudioSettings();
+                WriteAudioSettings(ref settings);
+                return settings;
+            }
+            set
+            {
+                resetAudioSettings = value;
+                ReadAudioSettings(value);
+            }
+        }
+
+        DeviceEntry entry;
+        public DeviceEntry SourceEntry
         {
             get { return entry; }
             set
@@ -103,7 +119,18 @@ namespace DSVideoInputView
             }
         }
 
-        public event Action<SourceSettings, bool> OnApply;
+        DeviceEntry audioEntry;
+        public DeviceEntry AudioEntry
+        {
+            get { return audioEntry; }
+            set
+            {
+                audioEntry = value;
+                UpdateEntryUi();
+            }
+        }
+
+        public event Action<SourceSettings, AudioSettings, bool> OnApply;
 
         bool customMulti = false;
         bool customResolution = false;
@@ -167,13 +194,25 @@ namespace DSVideoInputView
                 out settings.ResolutionHeight);
         }
 
+        void ReadAudioSettings(AudioSettings settings)
+        {
+
+        }
+
+        void WriteAudioSettings(ref AudioSettings settings)
+        {
+
+        }
+
         void Apply(bool store)
         {
             var settings = new SourceSettings();
+            var audioSettings = new AudioSettings();
             WriteSourceSettings(ref settings);
+            WriteAudioSettings(ref audioSettings);
 
             if (OnApply != null)
-                OnApply(settings, store);
+                OnApply(settings, audioSettings, store);
         }
 
         void Reset(bool show)
@@ -181,10 +220,11 @@ namespace DSVideoInputView
             if(show)
             {
                 ReadSourceSettings(resetSettings);
+                ReadAudioSettings(resetAudioSettings);
             }
 
             if (OnApply != null)
-                OnApply(resetSettings, false);
+                OnApply(resetSettings, resetAudioSettings, false);
         }
 
         private void ApplyClick(object sender, EventArgs e)
@@ -227,13 +267,46 @@ namespace DSVideoInputView
         {
             SuspendLayout();
 
-            labelSourceName.Text = $"Name: {entry.Name}";
-            labelSourceDisplayName.Text = $"DisplayName: {entry.DisplayName}";
+            if (entry != null)
+            {
+                labelSourceName.Text = $"Name: {entry.Name}";
+                labelSourceDisplayName.Text = $"DisplayName: {entry.DisplayName}";
+                buttonConfig.Enabled = true;
 
-            bool hasDialogue = FilterGraphTools.HasPropertyPages(entry.Filter);
-            buttonConfig.Enabled = hasDialogue;
+                bool hasDialogue = FilterGraphTools.HasPropertyPages(entry.Filter);
+                buttonConfig.Enabled = hasDialogue;
+            }
+            else
+            {
+                ClearSourceUI();
+            }
+
+            if(audioEntry != null)
+            {
+                labelAudioName.Text = $"Name: {audioEntry.Name}";
+                labelAudioDisplayName.Text = $"DisplayName: {audioEntry.DisplayName}";
+                buttonAudioConfig.Enabled = true;
+            }
+            else
+            {
+                ClearAudioUI();
+            }
 
             ResumeLayout();
+        }
+
+        void ClearSourceUI()
+        {
+            labelSourceName.Text = "";
+            labelSourceDisplayName.Text = "";
+            buttonConfig.Enabled = false;
+        }
+
+        void ClearAudioUI()
+        {
+            labelAudioName.Text = "";
+            labelAudioDisplayName.Text = "";
+            buttonAudioConfig.Enabled = false;
         }
 
         bool TryGetWidthHeightFromList(ListBox listBox, out int width, out int height)
@@ -305,12 +378,19 @@ namespace DSVideoInputView
 
         private void ConfigClick(object sender, EventArgs e)
         {
-            ShowPropertyPage();
+            ShowPropertyPage(entry);
         }
 
-        private void ShowPropertyPage()
+        private void AudioConfigClick(object sender, EventArgs e)
         {
-            FilterGraphTools.ShowFilterPropertyPage(entry.Filter, Handle);
+
+            ShowPropertyPage(audioEntry);
+        }
+
+        private void ShowPropertyPage(DeviceEntry device)
+        {
+            if (device != null && device.Filter != null)
+                FilterGraphTools.ShowFilterPropertyPage(device.Filter, Handle);
         }
     }
 }
